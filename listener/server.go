@@ -3,7 +3,6 @@ package listener
 import (
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"sync"
 )
@@ -24,17 +23,11 @@ func Response(conn net.Conn, provider io.ReadWriter) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, err := io.Copy(conn, provider)
-		if err != nil {
-			log.Fatalln("%T", err)
-		}
+		io.Copy(conn, provider)
 	}()
 	go func() {
 		defer wg.Done()
-		_, err := io.Copy(provider, conn)
-		if err != nil {
-			log.Fatalln("%T", err)
-		}
+		io.Copy(provider, conn)
 	}()
 	wg.Wait()
 	defer conn.Close()
