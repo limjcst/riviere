@@ -7,5 +7,9 @@ go:
   - 1.11.x
   - master
 
+before_script:
+  - go get github.com/mattn/goveralls
+
 script:
-  - go test -v -cover -race ./...
+  - go test -v -covermode=count -coverprofile=coverage.out ./...
+  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
