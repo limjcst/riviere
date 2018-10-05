@@ -5,16 +5,66 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
-// NewServer create a socket listening on a given address
-func NewServer(address string, port int) net.Listener {
+// TaggedServer can record whether it is done
+type TaggedServer struct {
+	listener net.Listener
+	done     chan bool
+}
+
+// Close a listener and set a tag
+func (server *TaggedServer) Close() {
+	go func() {
+		server.done <- true
+	}()
+	server.listener.Close()
+}
+
+// NewServer create a socket listening on a local address and forward
+func NewServer(address string, port int) (server *TaggedServer) {
 	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", address, port))
 	if err != nil {
 		// handle error
-		ln = nil
+		server = nil
+	} else {
+		server = &TaggedServer{
+			listener: ln,
+			done:     make(chan bool),
+		}
 	}
-	return ln
+	return server
+}
+
+// Start a server forwarding to given address
+func (server *TaggedServer) Start(forwardAddress string, forwardPort int) {
+	for {
+		conn, err := server.listener.Accept()
+		select {
+		case <-server.done:
+			defer func() {
+				if recover() != nil {
+				}
+			}()
+			conn.Close()
+			return
+		default:
+		}
+		if err != nil {
+			// handle error
+			continue
+		}
+		address := fmt.Sprintf("%s:%d", forwardAddress, forwardPort)
+		go func() {
+			forwardServer, err := net.DialTimeout("tcp", address, 1*time.Second)
+			if err != nil {
+				return
+			}
+			defer forwardServer.Close()
+			Response(conn, forwardServer)
+		}()
+	}
 }
 
 // Response to the request of server

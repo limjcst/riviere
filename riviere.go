@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"github.com/limjcst/riviere/listener"
 	"io"
-	"net"
 	"net/http"
+	"time"
 )
 
 func server() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Hello world!")
 	})
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe("127.0.0.1:80", nil)
 }
 
 func main() {
@@ -21,18 +21,8 @@ func main() {
 	if ln == nil {
 		fmt.Println("port not available")
 	} else {
-		for {
-			conn, err := ln.Accept()
-			if err != nil {
-				// handle error
-			}
-			go func() {
-				helloServer, err := net.Dial("tcp", "127.0.0.1:80")
-				if err != nil {
-					fmt.Println("Cannot connect to mock server!")
-				}
-				listener.Response(conn, helloServer)
-			}()
-		}
+		go func() { ln.Start("127.0.0.1", 80) }()
+		time.Sleep(10 * time.Second)
+		ln.Close()
 	}
 }
