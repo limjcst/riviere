@@ -17,10 +17,6 @@ func server() {
 
 func main() {
 	go server()
-	helloServer, err := net.Dial("tcp", "127.0.0.1:80")
-	if err != nil {
-		fmt.Println("Cannot connect to mock server!")
-	}
 	ln := listener.NewServer("127.0.0.1", 8000)
 	if ln == nil {
 		fmt.Println("port not available")
@@ -30,7 +26,13 @@ func main() {
 			if err != nil {
 				// handle error
 			}
-			go listener.Response(conn, helloServer)
+			go func() {
+				helloServer, err := net.Dial("tcp", "127.0.0.1:80")
+				if err != nil {
+					fmt.Println("Cannot connect to mock server!")
+				}
+				listener.Response(conn, helloServer)
+			}()
 		}
 	}
 }

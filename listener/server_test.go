@@ -9,19 +9,11 @@ import (
 )
 
 func GetServer(t *testing.T) (net.Listener, int) {
-	var (
-		port   int
-		server net.Listener
-	)
-	for port = 80; port < 32767; port++ {
-		server = NewServer("127.0.0.1", port)
-		if server != nil {
-			break
-		}
-	}
-	if server == nil {
+	server, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
 		t.Errorf("Cannot listen on any port")
 	}
+	port := server.Addr().(*net.TCPAddr).Port
 	return server, port
 }
 
