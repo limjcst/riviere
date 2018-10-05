@@ -9,6 +9,18 @@ import (
 	"time"
 )
 
+// CheckPort returns whether a port is listened
+func CheckPort(port int) (ok bool) {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 1*time.Second)
+	if err == nil {
+		conn.Close()
+		ok = true
+	} else {
+		ok = false
+	}
+	return ok
+}
+
 func GetServer(t *testing.T) (*TaggedServer, int) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -88,9 +100,7 @@ func TestStart(t *testing.T) {
 	conn.Close()
 	// Test closing listener
 	listener.Close()
-	conn, err = net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", listenerPort), 1*time.Second)
-	if err == nil {
-		conn.Close()
+	if CheckPort(listenerPort) {
 		t.Errorf("Connect to listener server after closed!")
 	}
 }

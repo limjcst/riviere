@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"github.com/limjcst/riviere/listener"
 	"io"
+	"log"
 	"net/http"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func server() {
@@ -17,12 +20,21 @@ func server() {
 
 func main() {
 	go server()
+	pool := listener.NewPool()
+	defer pool.Close()
 	ln := listener.NewServer("127.0.0.1", 8000)
 	if ln == nil {
 		fmt.Println("port not available")
 	} else {
 		go func() { ln.Start("127.0.0.1", 80) }()
-		time.Sleep(10 * time.Second)
-		ln.Close()
+		pool.Add(8000, ln)
 	}
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	<-sigc
+	log.Printf("Bye Bye!")
 }
