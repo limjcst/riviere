@@ -29,10 +29,26 @@ func TestClose(t *testing.T) {
 	server, port := GetServer(t)
 	pool.Add(port, server)
 	if !CheckPort(port) {
-		t.Errorf("Failed to listen port!")
+		t.Errorf("Failed to listen on port!")
 	}
 	pool.Close()
 	if CheckPort(port) {
 		t.Errorf("Failed to close listener with port %d", port)
+	}
+}
+
+func TestListen(t *testing.T) {
+	pool := NewPool()
+	defer pool.Close()
+	server, port := GetServer(t)
+	if pool.Listen("127.0.0.1", port, "127.0.0.1", port) {
+		t.Errorf("Listen on duplicated a port!")
+	}
+	server.Close()
+	if !pool.Listen("127.0.0.1", port, "127.0.0.1", port) {
+		t.Errorf("Failed to listen on port!")
+	}
+	if pool.Length() != 1 {
+		t.Errorf("Failed to add a listener!")
 	}
 }

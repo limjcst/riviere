@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/limjcst/riviere/listener"
 	"io"
 	"log"
@@ -22,13 +21,8 @@ func main() {
 	go server()
 	pool := listener.NewPool()
 	defer pool.Close()
-	ln := listener.NewServer("127.0.0.1", 8000)
-	if ln == nil {
-		fmt.Println("port not available")
-	} else {
-		go func() { ln.Start("127.0.0.1", 80) }()
-		pool.Add(8000, ln)
-	}
+	pool.Listen("127.0.0.1", 8000, "127.0.0.1", 80)
+	pool.Listen("127.0.0.1", 8001, "127.0.0.1", 8000)
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
 		syscall.SIGHUP,

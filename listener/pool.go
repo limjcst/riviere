@@ -47,3 +47,20 @@ func (pool *Pool) Close() {
 		log.Printf("Release Port %d", port)
 	}
 }
+
+// Listen setups a tunnel between given addresses
+func (pool *Pool) Listen(address string, port int,
+	forwardAddress string, forwardPort int) (ok bool) {
+	ln := NewServer(address, port)
+	if ln == nil {
+		log.Printf("Port %d is not available", port)
+		ok = false
+	} else {
+		go func() {
+			ln.Start(forwardAddress, forwardPort)
+		}()
+		pool.Add(port, ln)
+		ok = true
+	}
+	return ok
+}
