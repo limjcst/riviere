@@ -31,28 +31,41 @@ func NewRouter(prefix string) (router *mux.Router) {
 //     - application/json
 //
 //     Schemes: http, https
+//
+// swagger:operation GET /spec spec getSpec
+// ---
+// responses:
+//   '200':
+//     description: api spec
 func GetSpecEndpoint(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	http.ServeFile(w, req, "swagger.json")
 }
 
-// TunnelParam is the schema for the api of resource /tunnel
+// TunnelBody is a schema for the api of resource /tunnel
 // swagger:parameters addTunnel
+type TunnelBody struct {
+	// Tunnel parameters
+	//
+	// required: true
+	// in: body
+	Body TunnelParam `json:"body"`
+}
+
+// TunnelParam is the content of TunnelBody
+// swagger:model tunnel
 type TunnelParam struct {
 	// A port of the gate
 	//
 	// required: true
-	// in: body
 	Port int `json:"port"`
 	// The address of the target host
 	//
 	// required: true
-	// in: body
 	ForwardAddress string `json:"forward_address"`
 	// The port of the target host
 	//
 	// required: true
-	// in: body
 	ForwardPort int `json:"forward_port"`
 }
 
@@ -78,10 +91,15 @@ func NewTunnelParam(req *http.Request) *TunnelParam {
 //
 //     Schemes: http, https
 //
-//     Responses:
-//       201:
-//       400:
-//       409:
+// swagger:operation POST /tunnel tunnel addTunnel
+// ---
+// responses:
+//   '201':
+//     description: Add the tunnel successfully.
+//   '400':
+//     description: Bad request.
+//   '409':
+//     description: Duplicated post. Port is ocuppied.
 func AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	tunnel := NewTunnelParam(req)
 	if tunnel == nil {
@@ -100,13 +118,22 @@ func AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// PortParam is the schema with just a port
+// PortBody is a schema for the api of resource /tunnel
 // swagger:parameters deleteTunnel
+type PortBody struct {
+	// Port parameters
+	//
+	// required: true
+	// in: body
+	Body PortParam `json:"body"`
+}
+
+// PortParam is the schema with just a port
+// swagger:model
 type PortParam struct {
 	// A port of the gate
 	//
 	// required: true
-	// in: body
 	Port int `json:"port"`
 }
 
@@ -120,10 +147,15 @@ type PortParam struct {
 //
 //     Schemes: http, https
 //
-//     Responses:
-//       202:
-//       400:
-//       404:
+// swagger:operation DELETE /tunnel tunnel deleteTunnel
+// ---
+// responses:
+//   '202':
+//     description: Delete the tunnel successfully.
+//   '400':
+//     description: Bad request.
+//   '404':
+//     description: Port is free.
 func DeleteTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	tunnel := PortParam{-1}

@@ -6,7 +6,7 @@ build:
 	dep ensure
 	go get github.com/go-swagger/go-swagger/cmd/swagger
 	go build
-	swagger generate spec -o swagger.json
+	go generate
 
 test: format lint
 	go test -cover -race ./...
