@@ -59,9 +59,10 @@ type TunnelParam struct {
 // NewTunnelParam parses the parameters
 func NewTunnelParam(req *http.Request) *TunnelParam {
 	decoder := json.NewDecoder(req.Body)
-	param := &TunnelParam{}
+	param := &TunnelParam{-1, "", -1}
 	err := decoder.Decode(param)
-	if err != nil {
+	if err != nil || param.Port < 0 || param.ForwardAddress == "" ||
+		param.ForwardPort < 0 {
 		param = nil
 	}
 	return param
@@ -125,9 +126,9 @@ type PortParam struct {
 //       404:
 func DeleteTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
-	tunnel := PortParam{}
+	tunnel := PortParam{-1}
 	err := decoder.Decode(&tunnel)
-	if err != nil {
+	if err != nil || tunnel.Port < 0 {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
 		log.Printf("Request to delete listener on Port %d", tunnel.Port)
