@@ -5,7 +5,7 @@ import (
 )
 
 func TestEditPool(t *testing.T) {
-	pool := NewPool()
+	pool := NewPool("127.0.0.1")
 	if pool.Length() != 0 {
 		t.Errorf("New Pool is not empty!")
 	}
@@ -25,7 +25,7 @@ func TestEditPool(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	pool := NewPool()
+	pool := NewPool("127.0.0.1")
 	server, port := GetServer(t)
 	pool.Add(port, server)
 	if !CheckPort(port) {
@@ -38,14 +38,14 @@ func TestClose(t *testing.T) {
 }
 
 func TestListen(t *testing.T) {
-	pool := NewPool()
+	pool := NewPool("127.0.0.1")
 	defer pool.Close()
 	server, port := GetServer(t)
-	if pool.Listen("127.0.0.1", port, "127.0.0.1", port) {
+	if pool.Listen(port, "127.0.0.1", port) {
 		t.Errorf("Listen on duplicated a port!")
 	}
 	server.Close()
-	if !pool.Listen("127.0.0.1", port, "127.0.0.1", port) {
+	if !pool.Listen(port, "127.0.0.1", port) {
 		t.Errorf("Failed to listen on port!")
 	}
 	if pool.Length() != 1 {

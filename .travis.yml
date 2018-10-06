@@ -9,6 +9,8 @@ go:
   - master
 
 before_script:
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - $HOME/gopath/bin/dep ensure
   - go get github.com/mattn/goveralls
 
 script:
