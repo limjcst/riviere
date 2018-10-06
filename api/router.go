@@ -16,6 +16,7 @@ func NewRouter(prefix string) (router *mux.Router) {
 	router = mux.NewRouter()
 	router.HandleFunc(prefix+"/spec", GetSpecEndpoint).Methods("GET")
 	router.HandleFunc(prefix+"/tunnel", AddTunnelEndpoint).Methods("POST")
+	router.HandleFunc(prefix+"/tunnel", DeleteTunnelEndpoint).Methods("DELETE")
 	return router
 }
 
@@ -71,6 +72,9 @@ func NewTunnelParam(req *http.Request) *TunnelParam {
 //
 // Add a tunnel.
 //
+//     Consumes:
+//     - application/json
+//
 //     Schemes: http, https
 //
 //     Responses:
@@ -91,6 +95,48 @@ func AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 		} else {
 			w.WriteHeader(http.StatusConflict)
+		}
+	}
+}
+
+// PortParam is the schema with just a port
+// swagger:parameters deleteTunnel
+type PortParam struct {
+	// A port of the gate
+	//
+	// required: true
+	// in: body
+	Port int `json:"port"`
+}
+
+// DeleteTunnelEndpoint deletes a tunnel
+// swagger:route DELETE /tunnel tunnel deleteTunnel
+//
+// Delete a tunnel.
+//
+//     Consumes:
+//     - application/json
+//
+//     Schemes: http, https
+//
+//     Responses:
+//       202:
+//       400:
+//       404:
+func DeleteTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
+	decoder := json.NewDecoder(req.Body)
+	tunnel := PortParam{}
+	err := decoder.Decode(&tunnel)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		log.Printf("Request to delete listener on Port %d", tunnel.Port)
+		ok := GlobalPool.Delete(tunnel.Port)
+		if ok {
+			// TODO: Remove the tunnel from the database
+			w.WriteHeader(http.StatusAccepted)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	}
 }

@@ -34,7 +34,7 @@ func (pool *Pool) Add(port int, listener *TaggedServer) bool {
 }
 
 // Delete a listener from a pool and close it
-func (pool *Pool) Delete(port int) {
+func (pool *Pool) Delete(port int) bool {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 	listener, ok := pool.listeners[port]
@@ -42,6 +42,7 @@ func (pool *Pool) Delete(port int) {
 		listener.Close()
 		delete(pool.listeners, port)
 	}
+	return ok
 }
 
 // Length returns the size of the pool
