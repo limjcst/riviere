@@ -1,13 +1,18 @@
+SOURCES=$(shell go list ./...)
+
 all: build
 
 build:
-	go install
+	dep ensure
+	go get github.com/go-swagger/go-swagger/cmd/swagger
+	go build
+	swagger generate spec -o swagger.json
 
 test: format lint
 	go test -cover -race ./...
 
 format:
-	go fmt ./...
+	go fmt $(SOURCES)
 
 lint:
-	golint ./...
+	golint $(SOURCES)

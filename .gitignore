@@ -10,3 +10,9 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Swagger as it continues to change
+swagger.json
+
+# Dependencies installed by dep
+vendor/
