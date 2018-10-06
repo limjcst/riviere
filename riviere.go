@@ -14,10 +14,12 @@ import (
 
 func main() {
 	api.GlobalPool = listener.NewPool()
+	api.ServerAddress = ""
 	defer api.GlobalPool.Close()
 	go func() {
 		http.ListenAndServe("127.0.0.1:80", api.NewRouter("/riviere"))
 	}()
+	log.Printf("Rivière has started")
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
 		syscall.SIGHUP,
