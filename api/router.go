@@ -11,9 +11,6 @@ import (
 // GlobalPool stores the current listeners
 var GlobalPool *listener.Pool
 
-// ServerAddress stores the address Rivière will listen
-var ServerAddress string
-
 // NewRouter creates a router
 func NewRouter(prefix string) (router *mux.Router) {
 	router = mux.NewRouter()
@@ -87,7 +84,7 @@ func AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	} else {
 		log.Printf("Request to forward %d to %s:%d",
 			tunnel.Port, tunnel.ForwardAddress, tunnel.ForwardPort)
-		ok := GlobalPool.Listen(ServerAddress, tunnel.Port,
+		ok := GlobalPool.Listen(tunnel.Port,
 			tunnel.ForwardAddress, tunnel.ForwardPort)
 		if ok {
 			// TODO: Store the tunnel in the database

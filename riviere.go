@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	api.GlobalPool = listener.NewPool()
-	api.ServerAddress = ""
+	// Manage ports of each address available
+	api.GlobalPool = listener.NewPool("")
 	defer api.GlobalPool.Close()
 	go func() {
 		http.ListenAndServe("127.0.0.1:80", api.NewRouter("/riviere"))
