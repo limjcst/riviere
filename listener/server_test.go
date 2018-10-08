@@ -2,9 +2,9 @@ package listener
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 	"time"
 )
@@ -29,7 +29,8 @@ func GetServer(t *testing.T) (*TaggedServer, int) {
 	port := listener.Addr().(*net.TCPAddr).Port
 	server := &TaggedServer{
 		listener: listener,
-		done:     make(chan bool),
+		done:     false,
+		mutex:    &sync.Mutex{},
 	}
 	return server, port
 }
@@ -41,7 +42,11 @@ func StartReadOnlyServer(server *TaggedServer, text string) {
 			// handle error
 			break
 		}
-		go Response(conn, bytes.NewBufferString(text))
+		reader, writer := net.Pipe()
+		defer reader.Close()
+		defer writer.Close()
+		go Response(conn, reader)
+		writer.Write([]byte(text))
 	}
 }
 

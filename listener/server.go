@@ -11,14 +11,15 @@ import (
 // TaggedServer can record whether it is done
 type TaggedServer struct {
 	listener net.Listener
-	done     chan bool
+	done     bool
+	mutex    *sync.Mutex
 }
 
 // Close a listener and set a tag
 func (server *TaggedServer) Close() {
-	go func() {
-		server.done <- true
-	}()
+	server.mutex.Lock()
+	defer server.mutex.Unlock()
+	server.done = true
 	server.listener.Close()
 }
 
@@ -31,7 +32,8 @@ func NewServer(address string, port int) (server *TaggedServer) {
 	} else {
 		server = &TaggedServer{
 			listener: ln,
-			done:     make(chan bool),
+			done:     false,
+			mutex:    &sync.Mutex{},
 		}
 	}
 	return server
@@ -40,17 +42,13 @@ func NewServer(address string, port int) (server *TaggedServer) {
 // Start a server forwarding to given address
 func (server *TaggedServer) Start(forwardAddress string, forwardPort int) {
 	for {
-		conn, err := server.listener.Accept()
-		select {
-		case <-server.done:
-			defer func() {
-				if recover() != nil {
-				}
-			}()
-			conn.Close()
-			return
-		default:
+		server.mutex.Lock()
+		done := server.done
+		server.mutex.Unlock()
+		if done {
+			break
 		}
+		conn, err := server.listener.Accept()
 		if err != nil {
 			// handle error
 			continue
@@ -71,14 +69,13 @@ func (server *TaggedServer) Start(forwardAddress string, forwardPort int) {
 func Response(conn net.Conn, provider io.ReadWriter) {
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		io.Copy(conn, provider)
-	}()
-	go func() {
-		defer wg.Done()
-		io.Copy(provider, conn)
-	}()
+	go transfer(conn, provider, wg)
+	go transfer(provider, conn, wg)
 	wg.Wait()
 	defer conn.Close()
+}
+
+func transfer(receiver io.Writer, provider io.Reader, wg sync.WaitGroup) {
+	defer wg.Done()
+	io.Copy(receiver, provider)
 }
