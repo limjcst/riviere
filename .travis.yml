@@ -14,5 +14,5 @@ before_script:
   - go get github.com/mattn/goveralls
 
 script:
-  - make test./...
+  - make test
   - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
