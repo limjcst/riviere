@@ -15,7 +15,7 @@ build: env-check
 	go build
 	go generate
 
-test: format lint
+test: format
 	go test -cover -race -v -coverprofile=coverage.out ./...
 
 format:
