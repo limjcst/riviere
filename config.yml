@@ -1,0 +1,9 @@
+prefix: /riviere
+
+# sqlite3
+db_driver: sqlite3
+db_source_name: file:riviere.db?cache=shared&mode=memory
+
+# postgres
+# db_driver: postgres
+# db_driver: postgres://user:pass@localhost/riviere

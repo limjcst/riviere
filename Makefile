@@ -11,7 +11,6 @@ endif
 
 build: env-check
 	dep ensure
-	go get github.com/go-swagger/go-swagger/cmd/swagger
 	go build
 	go generate
 

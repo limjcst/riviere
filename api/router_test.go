@@ -2,8 +2,11 @@ package api
 
 import (
 	"bytes"
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/limjcst/riviere/listener"
+	"github.com/limjcst/riviere/models"
+	_ "github.com/mattn/go-sqlite3"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,8 +14,37 @@ import (
 	"testing"
 )
 
+type MockDB struct {
+	ready bool
+}
+
+func (db *MockDB) NewTunnel(tunnel *models.Tunnel) error {
+	if !db.ready {
+		return errors.New("port occupied")
+	}
+	return nil
+}
+
+func (db *MockDB) DeleteTunnel(tunnel *models.Tunnel) (int64, error) {
+	if !db.ready {
+		return 0, errors.New("tunnel doesn't exist")
+	}
+	return 1, nil
+}
+
+const testDBDriver = "sqlite3"
+const testDBSourceName = "file:test.db?cache=shared&mode=memory"
+
+func GetRouter() (router *mux.Router) {
+	return
+}
+
 func TestNewRouter(t *testing.T) {
-	router := NewRouter("")
+	router := NewRouter("", "unknown", testDBSourceName)
+	if router != nil {
+		t.Fatal("Create router without database")
+	}
+	router = NewRouter("", testDBDriver, testDBSourceName)
 	err := router.Walk(func(route *mux.Route, router *mux.Router,
 		ancestors []*mux.Route) (err error) {
 		pathTemplate, err := route.GetPathTemplate()
@@ -58,7 +90,8 @@ func TestAddTunnel(t *testing.T) {
 	GlobalPool = listener.NewPool("127.0.0.1")
 	defer GlobalPool.Close()
 	body := `{"forward_address": "127.0.0.1", "forward_port": 80}`
-	handler := http.HandlerFunc(AddTunnelEndpoint)
+	ctx := &ContextInjector{&MockDB{false}}
+	handler := http.HandlerFunc(ctx.AddTunnelEndpoint)
 
 	// Invalid data
 	data := bytes.NewBufferString(body)
@@ -78,7 +111,8 @@ func TestDeleteTunnel(t *testing.T) {
 	GlobalPool = listener.NewPool("127.0.0.1")
 	defer GlobalPool.Close()
 	body := `{}`
-	handler := http.HandlerFunc(DeleteTunnelEndpoint)
+	ctx := &ContextInjector{&MockDB{false}}
+	handler := http.HandlerFunc(ctx.DeleteTunnelEndpoint)
 
 	// Invalid data
 	data := bytes.NewBufferString(body)
@@ -87,7 +121,7 @@ func TestDeleteTunnel(t *testing.T) {
 	body = `{"port": 10000,"forward_address": "127.0.0.1","forward_port": 80}`
 	// Add
 	data = bytes.NewBufferString(body)
-	CheckEditTunnel(t, "POST", http.HandlerFunc(AddTunnelEndpoint),
+	CheckEditTunnel(t, "POST", http.HandlerFunc(ctx.AddTunnelEndpoint),
 		data, http.StatusCreated)
 
 	// Delete

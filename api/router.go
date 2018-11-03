@@ -4,19 +4,31 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/limjcst/riviere/listener"
+	"github.com/limjcst/riviere/models"
 	"log"
 	"net/http"
 )
+
+// ContextInjector injects database into endpoints
+type ContextInjector struct {
+	db models.Database
+}
 
 // GlobalPool stores the current listeners
 var GlobalPool *listener.Pool
 
 // NewRouter creates a router
-func NewRouter(prefix string) (router *mux.Router) {
+func NewRouter(prefix string, driverName string, dataSourceName string) (router *mux.Router) {
+	db, err := models.NewDB(driverName, dataSourceName)
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+	ctx := &ContextInjector{db}
 	router = mux.NewRouter()
 	router.HandleFunc(prefix+"/spec", GetSpecEndpoint).Methods("GET")
-	router.HandleFunc(prefix+"/tunnel", AddTunnelEndpoint).Methods("POST")
-	router.HandleFunc(prefix+"/tunnel", DeleteTunnelEndpoint).Methods("DELETE")
+	router.HandleFunc(prefix+"/tunnel", ctx.AddTunnelEndpoint).Methods("POST")
+	router.HandleFunc(prefix+"/tunnel", ctx.DeleteTunnelEndpoint).Methods("DELETE")
 	return router
 }
 
@@ -49,30 +61,13 @@ type TunnelBody struct {
 	//
 	// required: true
 	// in: body
-	Body TunnelParam `json:"body"`
-}
-
-// TunnelParam is the content of TunnelBody
-// swagger:model tunnel
-type TunnelParam struct {
-	// A port of the gate
-	//
-	// required: true
-	Port int `json:"port"`
-	// The address of the target host
-	//
-	// required: true
-	ForwardAddress string `json:"forward_address"`
-	// The port of the target host
-	//
-	// required: true
-	ForwardPort int `json:"forward_port"`
+	Body models.Tunnel `json:"body"`
 }
 
 // NewTunnelParam parses the parameters
-func NewTunnelParam(req *http.Request) *TunnelParam {
+func NewTunnelParam(req *http.Request) *models.Tunnel {
 	decoder := json.NewDecoder(req.Body)
-	param := &TunnelParam{-1, "", -1}
+	param := &models.Tunnel{-1, "", -1}
 	err := decoder.Decode(param)
 	if err != nil || param.Port < 0 || param.ForwardAddress == "" ||
 		param.ForwardPort < 0 {
@@ -100,7 +95,7 @@ func NewTunnelParam(req *http.Request) *TunnelParam {
 //     description: Bad request.
 //   '409':
 //     description: Duplicated post. Port is ocuppied.
-func AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
+func (ctx *ContextInjector) AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	tunnel := NewTunnelParam(req)
 	if tunnel == nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -110,7 +105,10 @@ func AddTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 		ok := GlobalPool.Listen(tunnel.Port,
 			tunnel.ForwardAddress, tunnel.ForwardPort)
 		if ok {
-			// TODO: Store the tunnel in the database
+			err := ctx.db.NewTunnel(tunnel)
+			if err != nil {
+				log.Print(err)
+			}
 			w.WriteHeader(http.StatusCreated)
 		} else {
 			w.WriteHeader(http.StatusConflict)
@@ -156,7 +154,7 @@ type PortParam struct {
 //     description: Bad request.
 //   '404':
 //     description: Port is free.
-func DeleteTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
+func (ctx *ContextInjector) DeleteTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	tunnel := PortParam{-1}
 	err := decoder.Decode(&tunnel)
@@ -166,7 +164,10 @@ func DeleteTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Request to delete listener on Port %d", tunnel.Port)
 		ok := GlobalPool.Delete(tunnel.Port)
 		if ok {
-			// TODO: Remove the tunnel from the database
+			_, err := ctx.db.DeleteTunnel(&models.Tunnel{Port: tunnel.Port})
+			if err != nil {
+				log.Print(err)
+			}
 			w.WriteHeader(http.StatusAccepted)
 		} else {
 			w.WriteHeader(http.StatusNotFound)

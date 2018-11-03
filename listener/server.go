@@ -57,6 +57,7 @@ func (server *TaggedServer) Start(forwardAddress string, forwardPort int) {
 		go func() {
 			forwardServer, err := net.DialTimeout("tcp", address, 1*time.Second)
 			if err != nil {
+				conn.Close()
 				return
 			}
 			defer forwardServer.Close()
