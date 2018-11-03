@@ -17,6 +17,7 @@ import (
 	"github.com/limjcst/riviere/api"
 	"github.com/limjcst/riviere/config"
 	"github.com/limjcst/riviere/listener"
+	"github.com/limjcst/riviere/models"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
@@ -28,6 +29,30 @@ import (
 // Name is the name of this application
 const Name = "Rivière"
 
+func load(c *config.Config) models.Database {
+	db, err := models.NewDB(c.DBDriver, c.DBSourceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tunnels, err := db.ListTunnel()
+	if err != nil {
+		log.Fatal(err)
+	}
+	n := 0
+	for _, tunnel := range tunnels {
+		ok := api.GlobalPool.Listen(tunnel.Port,
+			tunnel.ForwardAddress, tunnel.ForwardPort)
+		if !ok {
+			log.Printf("WARNING: Failed to recover the tunnel from %d to %s:%d",
+				tunnel.Port, tunnel.ForwardAddress, tunnel.ForwardPort)
+		} else {
+			n++
+		}
+	}
+	log.Printf("Recover %d tunnels", n)
+	return db
+}
+
 func start(host *string, port *int, configFile *string) {
 	// Manage ports of each address available
 	api.GlobalPool = listener.NewPool("")
@@ -35,7 +60,8 @@ func start(host *string, port *int, configFile *string) {
 	address := fmt.Sprintf("%s:%d", *host, *port)
 	var c config.Config
 	c.ParseConfig(*configFile)
-	router := api.NewRouter(&c)
+	db := load(&c)
+	router := api.NewRouter(&c, db)
 	if router == nil {
 		return
 	}

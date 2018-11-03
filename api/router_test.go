@@ -50,13 +50,7 @@ func GetRouter() (router *mux.Router) {
 }
 
 func TestNewRouter(t *testing.T) {
-	c := &config.Config{DBDriver: "unknown", DBSourceName: testDBSourceName}
-	router := NewRouter(c)
-	if router != nil {
-		t.Fatal("Create router without database")
-	}
-	c.DBDriver = testDBDriver
-	router = NewRouter(c)
+	router := NewRouter(new(config.Config), new(MockDB))
 	err := router.Walk(func(route *mux.Route, router *mux.Router,
 		ancestors []*mux.Route) (err error) {
 		pathTemplate, err := route.GetPathTemplate()

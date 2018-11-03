@@ -20,12 +20,7 @@ type ContextInjector struct {
 var GlobalPool *listener.Pool
 
 // NewRouter creates a router
-func NewRouter(c *config.Config) (router *mux.Router) {
-	db, err := models.NewDB(c.DBDriver, c.DBSourceName)
-	if err != nil {
-		log.Print(err)
-		return nil
-	}
+func NewRouter(c *config.Config, db models.Database) (router *mux.Router) {
 	ctx := &ContextInjector{db: db, conf: c}
 	router = mux.NewRouter()
 	router.HandleFunc(c.Prefix+"/spec", ctx.GetSpecEndpoint).Methods("GET")
