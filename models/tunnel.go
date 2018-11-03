@@ -48,3 +48,27 @@ DELETE FROM tunnel WHERE port=?;
 	}
 	return result.RowsAffected()
 }
+
+// ListTunnel lists all the tunnels
+func (db *DB) ListTunnel() ([]*Tunnel, error) {
+	q := `SELECT port, forward_port, forward_address FROM tunnel;`
+	rows, err := db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tunnels := make([]*Tunnel, 0)
+	for rows.Next() {
+		tunnel := new(Tunnel)
+		err := rows.Scan(&tunnel.Port, &tunnel.ForwardPort, &tunnel.ForwardAddress)
+		if err != nil {
+			return nil, err
+		}
+		tunnels = append(tunnels, tunnel)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return tunnels, nil
+}

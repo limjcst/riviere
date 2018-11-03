@@ -61,9 +61,17 @@ func TestDeleteTunnel(t *testing.T) {
 		t.Log(err)
 		t.Error("Failed to insert tunnel into database")
 	}
+	tunnels, err := db.ListTunnel()
+	if err != nil || len(tunnels) != 1 {
+		t.Error("Failed to fetch tunnels")
+	}
 	n, err := db.DeleteTunnel(tunnel)
 	if n != 1 || err != nil {
 		t.Error("Failed to delete tunnel from database")
+	}
+	tunnels, err = db.ListTunnel()
+	if err != nil || len(tunnels) != 0 {
+		t.Error("Failed to fetch tunnels")
 	}
 	n, err = db.DeleteTunnel(tunnel)
 	if n != 0 || err != nil {

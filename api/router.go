@@ -31,6 +31,7 @@ func NewRouter(c *config.Config) (router *mux.Router) {
 	router.HandleFunc(c.Prefix+"/spec", ctx.GetSpecEndpoint).Methods("GET")
 	router.HandleFunc(c.Prefix+"/tunnel", ctx.AddTunnelEndpoint).Methods("POST")
 	router.HandleFunc(c.Prefix+"/tunnel", ctx.DeleteTunnelEndpoint).Methods("DELETE")
+	router.HandleFunc(c.Prefix+"/tunnel", ctx.ListTunnelEndpoint).Methods("GET")
 	return router
 }
 
@@ -175,4 +176,40 @@ func (ctx *ContextInjector) DeleteTunnelEndpoint(w http.ResponseWriter, req *htt
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}
+}
+
+// ListTunnelEndpoint lists tunnels
+// swagger:route GET /tunnel tunnel getTunnel
+//
+// List tunnels.
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http, https
+//
+// swagger:operation GET /tunnel tunnel getTunnel
+// ---
+// responses:
+//   '200':
+//     description: Get the tunnels successfully.
+//     schema:
+//       type: array
+//       items:
+//         $ref: '#/definitions/Tunnel'
+//   '500':
+//     description: Internal Server Error.
+func (ctx *ContextInjector) ListTunnelEndpoint(w http.ResponseWriter, req *http.Request) {
+	var data []byte
+	tunnels, err := ctx.db.ListTunnel()
+	if err == nil {
+		data, err = json.Marshal(tunnels)
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Print(err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
 }

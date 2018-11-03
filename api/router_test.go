@@ -33,6 +33,15 @@ func (db *MockDB) DeleteTunnel(tunnel *models.Tunnel) (int64, error) {
 	return 1, nil
 }
 
+func (db *MockDB) ListTunnel() ([]*models.Tunnel, error) {
+	tunnels := make([]*models.Tunnel, 0)
+	if !db.ready {
+		return tunnels, errors.New("Failed to fetch tunnels")
+	}
+	tunnels = append(tunnels, &models.Tunnel{})
+	return tunnels, nil
+}
+
 const testDBDriver = "sqlite3"
 const testDBSourceName = "file:test.db?cache=shared&mode=memory"
 
@@ -136,4 +145,16 @@ func TestDeleteTunnel(t *testing.T) {
 	// Delete again
 	data = bytes.NewBufferString(body)
 	CheckEditTunnel(t, "DELETE", handler, data, http.StatusNotFound)
+}
+
+func TestListTunnel(t *testing.T) {
+	ctx := &ContextInjector{&MockDB{false}, nil}
+	handler := http.HandlerFunc(ctx.ListTunnelEndpoint)
+
+	// DB fails
+	CheckEditTunnel(t, "GET", handler, nil, http.StatusInternalServerError)
+	// DB is ready
+	ctx = &ContextInjector{&MockDB{true}, nil}
+	handler = http.HandlerFunc(ctx.ListTunnelEndpoint)
+	CheckEditTunnel(t, "GET", handler, nil, http.StatusOK)
 }

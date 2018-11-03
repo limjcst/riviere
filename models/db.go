@@ -8,6 +8,7 @@ import (
 type Database interface {
 	NewTunnel(tunnel *Tunnel) error
 	DeleteTunnel(tunnel *Tunnel) (int64, error)
+	ListTunnel() ([]*Tunnel, error)
 }
 
 // DB wraps sql.DB, with a set of implementations of Database
