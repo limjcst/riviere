@@ -14,4 +14,4 @@ Run `make` to generate executale file.
 `GOPATH` is required by `go-swagger` to create `swagger.json`, which describes the usages of APIs.
 
 As for the database, `sqlite3` and `postgres` are avaliable.
-To extend the supported database list, import the driver in `config/config.go`, and compile again.
+To extend the supported database list, import the driver in `riviere.go`, and compile again.
