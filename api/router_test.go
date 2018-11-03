@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gorilla/mux"
+	"github.com/limjcst/riviere/config"
 	"github.com/limjcst/riviere/listener"
 	"github.com/limjcst/riviere/models"
 	_ "github.com/mattn/go-sqlite3"
@@ -40,11 +41,13 @@ func GetRouter() (router *mux.Router) {
 }
 
 func TestNewRouter(t *testing.T) {
-	router := NewRouter("", "unknown", testDBSourceName)
+	c := &config.Config{DBDriver: "unknown", DBSourceName: testDBSourceName}
+	router := NewRouter(c)
 	if router != nil {
 		t.Fatal("Create router without database")
 	}
-	router = NewRouter("", testDBDriver, testDBSourceName)
+	c.DBDriver = testDBDriver
+	router = NewRouter(c)
 	err := router.Walk(func(route *mux.Route, router *mux.Router,
 		ancestors []*mux.Route) (err error) {
 		pathTemplate, err := route.GetPathTemplate()
@@ -67,7 +70,8 @@ func TestSpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler := http.HandlerFunc(GetSpecEndpoint)
+	ctx := &ContextInjector{&MockDB{false}, &config.Config{Spec: ""}}
+	handler := http.HandlerFunc(ctx.GetSpecEndpoint)
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 }
@@ -90,7 +94,7 @@ func TestAddTunnel(t *testing.T) {
 	GlobalPool = listener.NewPool("127.0.0.1")
 	defer GlobalPool.Close()
 	body := `{"forward_address": "127.0.0.1", "forward_port": 80}`
-	ctx := &ContextInjector{&MockDB{false}}
+	ctx := &ContextInjector{&MockDB{false}, nil}
 	handler := http.HandlerFunc(ctx.AddTunnelEndpoint)
 
 	// Invalid data
@@ -111,7 +115,7 @@ func TestDeleteTunnel(t *testing.T) {
 	GlobalPool = listener.NewPool("127.0.0.1")
 	defer GlobalPool.Close()
 	body := `{}`
-	ctx := &ContextInjector{&MockDB{false}}
+	ctx := &ContextInjector{&MockDB{false}, nil}
 	handler := http.HandlerFunc(ctx.DeleteTunnelEndpoint)
 
 	// Invalid data

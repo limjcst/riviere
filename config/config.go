@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	_ "github.com/lib/pq"
@@ -8,13 +8,16 @@ import (
 	"log"
 )
 
-type config struct {
+// Config is used to store configuations
+type Config struct {
 	Prefix       string `yaml:"prefix"`
 	DBDriver     string `yaml:"db_driver"`
 	DBSourceName string `yaml:"db_source_name"`
+	Spec         string `yaml:"spec"`
 }
 
-func (c *config) parseConfig(filename string) *config {
+// ParseConfig parses configurations from yaml formated file
+func (c *Config) ParseConfig(filename string) *Config {
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Printf("yamlFile.Get err #%v ", err)

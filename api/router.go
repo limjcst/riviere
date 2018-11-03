@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/limjcst/riviere/config"
 	"github.com/limjcst/riviere/listener"
 	"github.com/limjcst/riviere/models"
 	"log"
@@ -11,24 +12,25 @@ import (
 
 // ContextInjector injects database into endpoints
 type ContextInjector struct {
-	db models.Database
+	db   models.Database
+	conf *config.Config
 }
 
 // GlobalPool stores the current listeners
 var GlobalPool *listener.Pool
 
 // NewRouter creates a router
-func NewRouter(prefix string, driverName string, dataSourceName string) (router *mux.Router) {
-	db, err := models.NewDB(driverName, dataSourceName)
+func NewRouter(c *config.Config) (router *mux.Router) {
+	db, err := models.NewDB(c.DBDriver, c.DBSourceName)
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
-	ctx := &ContextInjector{db}
+	ctx := &ContextInjector{db: db, conf: c}
 	router = mux.NewRouter()
-	router.HandleFunc(prefix+"/spec", GetSpecEndpoint).Methods("GET")
-	router.HandleFunc(prefix+"/tunnel", ctx.AddTunnelEndpoint).Methods("POST")
-	router.HandleFunc(prefix+"/tunnel", ctx.DeleteTunnelEndpoint).Methods("DELETE")
+	router.HandleFunc(c.Prefix+"/spec", ctx.GetSpecEndpoint).Methods("GET")
+	router.HandleFunc(c.Prefix+"/tunnel", ctx.AddTunnelEndpoint).Methods("POST")
+	router.HandleFunc(c.Prefix+"/tunnel", ctx.DeleteTunnelEndpoint).Methods("DELETE")
 	return router
 }
 
@@ -49,9 +51,9 @@ func NewRouter(prefix string, driverName string, dataSourceName string) (router 
 // responses:
 //   '200':
 //     description: api spec
-func GetSpecEndpoint(w http.ResponseWriter, req *http.Request) {
+func (ctx *ContextInjector) GetSpecEndpoint(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	http.ServeFile(w, req, "swagger.json")
+	http.ServeFile(w, req, ctx.conf.Spec)
 }
 
 // TunnelBody is a schema for the api of resource /tunnel

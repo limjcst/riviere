@@ -14,6 +14,7 @@ import (
 	_ "github.com/go-swagger/go-swagger"
 	"github.com/gorilla/handlers"
 	"github.com/limjcst/riviere/api"
+	"github.com/limjcst/riviere/config"
 	"github.com/limjcst/riviere/listener"
 	"log"
 	"net/http"
@@ -30,9 +31,9 @@ func start(host *string, port *int, configFile *string) {
 	api.GlobalPool = listener.NewPool("")
 	defer api.GlobalPool.Close()
 	address := fmt.Sprintf("%s:%d", *host, *port)
-	var c config
-	c.parseConfig(*configFile)
-	router := api.NewRouter(c.Prefix, c.DBDriver, c.DBSourceName)
+	var c config.Config
+	c.ParseConfig(*configFile)
+	router := api.NewRouter(&c)
 	if router == nil {
 		return
 	}

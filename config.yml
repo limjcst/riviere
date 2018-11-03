@@ -1,4 +1,5 @@
 prefix: /riviere
+spec: swagger.json
 
 # sqlite3
 db_driver: sqlite3
