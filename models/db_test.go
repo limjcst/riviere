@@ -19,7 +19,7 @@ func TestNewDB(t *testing.T) {
 	}
 
 	// data source name out of reach
-	_, err = NewDB(testDBDriver, "?")
+	_, err = NewDB(testDBDriver, "file:test.db?cache=shared&mode=ro")
 	if err == nil {
 		t.Error("Create db based on unreachable data source name")
 	}

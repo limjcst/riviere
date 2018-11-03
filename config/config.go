@@ -1,8 +1,6 @@
 package config
 
 import (
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
