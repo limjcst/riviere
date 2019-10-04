@@ -24,9 +24,10 @@ func NewRouter(c *config.Config, db models.Database) (router *mux.Router) {
 	ctx := &ContextInjector{db: db, conf: c}
 	router = mux.NewRouter()
 	router.HandleFunc(c.Prefix+"/spec", ctx.GetSpecEndpoint).Methods("GET")
-	router.HandleFunc(c.Prefix+"/tunnel", ctx.AddTunnelEndpoint).Methods("POST")
-	router.HandleFunc(c.Prefix+"/tunnel", ctx.DeleteTunnelEndpoint).Methods("DELETE")
-	router.HandleFunc(c.Prefix+"/tunnel", ctx.ListTunnelEndpoint).Methods("GET")
+	prefix := c.Prefix + "/tunnel"
+	router.HandleFunc(prefix, ctx.AddTunnelEndpoint).Methods("POST")
+	router.HandleFunc(prefix, ctx.DeleteTunnelEndpoint).Methods("DELETE")
+	router.HandleFunc(prefix, ctx.ListTunnelEndpoint).Methods("GET")
 	return router
 }
 
