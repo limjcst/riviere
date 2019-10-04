@@ -1,16 +1,12 @@
 language: go
 go:
-# Previous versions cannot support test command with coverprofile for multiple-packages
-#  - 1.7.x
-#  - 1.8.x
-#  - 1.9.x
-  - 1.10.x
   - 1.11.x
+  - 1.12.x
+  - 1.13.x
   - master
 
 before_script:
-  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-  - $HOME/gopath/bin/dep ensure
+  - go mod download
   - go get github.com/mattn/goveralls
 
 script:

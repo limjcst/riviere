@@ -13,7 +13,7 @@
 *.out
 
 # Swagger as it continues to change
-swagger.json
+# swagger.json
 
 # Dependencies installed by dep
 vendor/

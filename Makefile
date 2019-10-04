@@ -2,15 +2,7 @@ SOURCES=$(shell go list ./...)
 
 all: build
 
-env-check:
-	dep version
-ifeq ($(GOPATH), )
-		echo "GOPATH is required"
-		exit 1
-endif
-
-build: env-check
-	dep ensure
+build:
 	go build
 	go generate
 

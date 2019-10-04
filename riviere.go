@@ -11,7 +11,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	_ "github.com/go-swagger/go-swagger"
 	"github.com/gorilla/handlers"
 	_ "github.com/lib/pq"
 	"github.com/limjcst/riviere/api"

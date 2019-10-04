@@ -1,0 +1,179 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Set up tunnels between local ports and remote addresses dynamically.",
+    "title": "Rivière",
+    "version": "Beta"
+  },
+  "basePath": "/rivieve",
+  "paths": {
+    "/spec": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "spec"
+        ],
+        "operationId": "getSpec",
+        "responses": {
+          "200": {
+            "description": "api spec"
+          }
+        }
+      }
+    },
+    "/tunnel": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "tunnel"
+        ],
+        "operationId": "getTunnel",
+        "responses": {
+          "200": {
+            "description": "Get the tunnels successfully.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Tunnel"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error."
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "tunnel"
+        ],
+        "operationId": "addTunnel",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "description": "Tunnel parameters",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Tunnel"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Add the tunnel successfully."
+          },
+          "400": {
+            "description": "Bad request."
+          },
+          "409": {
+            "description": "Duplicated post. Port is ocuppied."
+          }
+        }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "tunnel"
+        ],
+        "operationId": "deleteTunnel",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "description": "Port parameters",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PortParam"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Delete the tunnel successfully."
+          },
+          "400": {
+            "description": "Bad request."
+          },
+          "404": {
+            "description": "Port is free."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "PortParam": {
+      "description": "PortParam is the schema with just a port",
+      "type": "object",
+      "required": [
+        "port"
+      ],
+      "properties": {
+        "port": {
+          "description": "A port of the gate",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Port"
+        }
+      },
+      "x-go-package": "github.com/limjcst/riviere/api"
+    },
+    "Tunnel": {
+      "description": "Tunnel is the content of TunnelBody",
+      "type": "object",
+      "required": [
+        "port",
+        "forward_address",
+        "forward_port"
+      ],
+      "properties": {
+        "forward_address": {
+          "description": "The address of the target host",
+          "type": "string",
+          "x-go-name": "ForwardAddress"
+        },
+        "forward_port": {
+          "description": "The port of the target host",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ForwardPort"
+        },
+        "port": {
+          "description": "A port of the gate",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Port"
+        }
+      },
+      "x-go-package": "github.com/limjcst/riviere/models"
+    }
+  }
+}
