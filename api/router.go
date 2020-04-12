@@ -6,6 +6,7 @@ import (
 	"github.com/limjcst/riviere/config"
 	"github.com/limjcst/riviere/listener"
 	"github.com/limjcst/riviere/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 )
@@ -23,6 +24,9 @@ var GlobalPool *listener.Pool
 func NewRouter(c *config.Config, db models.Database) (router *mux.Router) {
 	ctx := &ContextInjector{db: db, conf: c}
 	router = mux.NewRouter()
+
+	router.HandleFunc("/metrics", promhttp.Handler().ServeHTTP)
+
 	router.HandleFunc(c.Prefix+"/spec", ctx.GetSpecEndpoint).Methods("GET")
 	prefix := c.Prefix + "/tunnel"
 	router.HandleFunc(prefix, ctx.AddTunnelEndpoint).Methods("POST")
