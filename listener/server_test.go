@@ -42,11 +42,10 @@ func StartReadOnlyServer(server *TaggedServer, text string) {
 			// handle error
 			break
 		}
-		reader, writer := net.Pipe()
-		defer reader.Close()
-		defer writer.Close()
-		go Response(conn, reader)
-		writer.Write([]byte(text))
+		go func(conn net.Conn) {
+			conn.Write([]byte(text))
+			conn.Close()
+		}(conn)
 	}
 }
 
@@ -142,4 +141,38 @@ func TestEcho(t *testing.T) {
 	if err != nil || status != text {
 		t.Errorf("Failed to continue! %s", status)
 	}
+}
+
+func TestWorkload(t *testing.T) {
+	server, port := GetServer(t)
+	text := "Hello World\n"
+	go StartReadOnlyServer(server, text)
+	listener, listenerPort := GetServer(t)
+	go listener.Start("127.0.0.1", port)
+	addr := fmt.Sprintf("127.0.0.1:%d", listenerPort)
+
+	var status string
+
+	var i int
+	// Connect more times than port number
+	// Ports are supposed to be released timely
+	for i = 1; i < 65537; i++ {
+		// Control access rate
+		if i%128 == 0 {
+			time.Sleep(1 * time.Second)
+		}
+		conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
+		if err != nil {
+			t.Errorf("Cannot connect to listener server!%+v", err)
+			continue
+		}
+		status, err = bufio.NewReader(conn).ReadString('\n')
+		if err != nil || status != text {
+			t.Errorf("Information lost through listener! %s", status)
+		}
+		conn.Close()
+	}
+
+	listener.Close()
+	server.Close()
 }

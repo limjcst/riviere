@@ -60,23 +60,24 @@ func (server *TaggedServer) Start(forwardAddress string, forwardPort int) {
 				conn.Close()
 				return
 			}
-			defer forwardServer.Close()
 			Response(conn, forwardServer)
 		}()
 	}
 }
 
 // Response to the request of server
-func Response(conn net.Conn, provider io.ReadWriter) {
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go transfer(conn, provider, wg)
-	go transfer(provider, conn, wg)
-	wg.Wait()
-	defer conn.Close()
+func Response(conn net.Conn, provider net.Conn) {
+	ch := make(chan bool)
+	go transfer(conn, provider, ch)
+	go transfer(provider, conn, ch)
+	<-ch
+	conn.Close()
+	provider.Close()
+	<-ch
+	close(ch)
 }
 
-func transfer(receiver io.Writer, provider io.Reader, wg sync.WaitGroup) {
-	defer wg.Done()
+func transfer(receiver io.Writer, provider io.Reader, ch chan bool) {
 	io.Copy(receiver, provider)
+	ch <- true
 }
