@@ -15,4 +15,5 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
     - run: |
-        go test -cover -race -v -coverprofile=coverage.out ./...
+        go test -cover -race -v -coverprofile=coverage.out ./... &&
+        go tool cover -func coverage.out
