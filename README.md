@@ -1,6 +1,8 @@
 # Rivière
 
 [![Actions](https://github.com/limjcst/riviere/actions/workflows/actions.yml/badge.svg)](https://github.com/limjcst/riviere/actions/workflows/actions.yml)
+[![Maintainability](https://api.codeclimate.com/v1/badges/9df6ebe2856ba3a24ed3/maintainability)](https://codeclimate.com/github/limjcst/riviere/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/9df6ebe2856ba3a24ed3/test_coverage)](https://codeclimate.com/github/limjcst/riviere/test_coverage)
 
 ## Overview
 
